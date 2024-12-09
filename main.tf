@@ -107,11 +107,14 @@ resource "aws_security_group" "private_sg" {
 }
 
 # Autoscaling Group in public subnet
-resource "aws_launch_configuration" "as_conf" {
-  name            = "asg_config"
+resource "aws_launch_template" "as_conf" {
+  name            = "asg_config_1"
   image_id        = "ami-055e3d4f0bbeb5878"
   instance_type   = "t2.micro"
-  security_groups = [aws_security_group.public_sg.id]
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_instance_profile.name
+  }
+  vpc_security_group_ids = [aws_security_group.public_sg.id]
 }
 
 resource "aws_autoscaling_group" "asg" {
@@ -119,13 +122,13 @@ resource "aws_autoscaling_group" "asg" {
   max_size             = 3
   min_size             = 1
   vpc_zone_identifier  = aws_subnet.public_subnets[*].id
-  launch_configuration = aws_launch_configuration.as_conf.id
+  launch_configuration = aws_launch_template.as_conf.id
 }
 
 # EC2 instance in private subnet
 resource "aws_instance" "private_instance" {
   ami             = "ami-055e3d4f0bbeb5878"
-  instance_type   = "t2_micro"
+  instance_type   = "t2.micro"
   subnet_id       = aws_subnet.private_subnets[0].id
   security_groups = [aws_security_group.private_sg.id]
 }
