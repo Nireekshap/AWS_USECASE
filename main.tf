@@ -165,9 +165,17 @@ resource "aws_lb_listener" "http_listener" {
 
 # S3 bucket
 resource "aws_s3_bucket" "app_storage" {
-  bucket = "application-storage-bucket"
+  bucket = "application-storage-bucket1"
   tags = {
     Name = "app_storage"
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "app_bucket_ownership_controls" {
+  bucket = aws_s3_bucket.app_storage.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"  
   }
 }
 
@@ -185,7 +193,7 @@ resource "aws_s3_bucket_versioning" "app_storage_versioning" {
 
 # IAM role
 resource "aws_iam_role" "ec2_role" {
-  name = "EC2S3AccessRole"
+  name = "EC2S3AccessRole1"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
