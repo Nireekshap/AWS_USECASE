@@ -107,11 +107,14 @@ resource "aws_security_group" "private_sg" {
 }
 
 # Autoscaling Group in public subnet
-resource "aws_launch_configuration" "as_conf" {
-  name            = "asg_config"
+resource "aws_launch_template" "as_conf" {
+  name            = "asg_config_1"
   image_id        = "ami-055e3d4f0bbeb5878"
   instance_type   = "t2.micro"
-  security_groups = [aws_security_group.public_sg.id]
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_instance_profile.name
+  }
+  vpc_security_group_ids = [aws_security_group.public_sg.id]
 }
 
 resource "aws_autoscaling_group" "asg" {
@@ -119,13 +122,17 @@ resource "aws_autoscaling_group" "asg" {
   max_size             = 3
   min_size             = 1
   vpc_zone_identifier  = aws_subnet.public_subnets[*].id
-  launch_configuration = aws_launch_configuration.as_conf.id
+  launch_template {
+    id      = aws_launch_template.as_conf.id
+    version = "$Latest"
+  }
+  target_group_arns = [aws_lb_target_group.public_tg.arn]
 }
 
 # EC2 instance in private subnet
 resource "aws_instance" "private_instance" {
   ami             = "ami-055e3d4f0bbeb5878"
-  instance_type   = "t2_micro"
+  instance_type   = "t2.micro"
   subnet_id       = aws_subnet.private_subnets[0].id
   security_groups = [aws_security_group.private_sg.id]
 }
@@ -158,7 +165,7 @@ resource "aws_lb_listener" "http_listener" {
 
 # S3 bucket
 resource "aws_s3_bucket" "app_storage" {
-  bucket = "application-storage-bucket"
+  bucket = "application-storage-bucket1"
   tags = {
     Name = "app_storage"
   }
@@ -178,7 +185,7 @@ resource "aws_s3_bucket_versioning" "app_storage_versioning" {
 
 # IAM role
 resource "aws_iam_role" "ec2_role" {
-  name = "EC2S3AccessRole"
+  name = "EC2S3AccessRole1"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -223,4 +230,6 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
   name = "EC2S3IntsanceProfile"
   role = aws_iam_role.ec2_role.name
 }
+
+
 
