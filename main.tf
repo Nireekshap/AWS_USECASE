@@ -122,7 +122,11 @@ resource "aws_autoscaling_group" "asg" {
   max_size             = 3
   min_size             = 1
   vpc_zone_identifier  = aws_subnet.public_subnets[*].id
-  launch_configuration = aws_launch_template.as_conf.id
+  launch_template {
+    id      = aws_launch_template.as_conf.id
+    version = "$Latest"
+  }
+  target_group_arns = [aws_lb_target_group.public_tg.arn]
 }
 
 # EC2 instance in private subnet
