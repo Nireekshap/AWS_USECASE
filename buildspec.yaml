@@ -16,7 +16,10 @@ phases:
       - terraform apply -auto-approve
   post_build:
     commands:
-      - echo Terraform apply completed.
+      - echo Waiting for 5 minutes before destroying the deployment
+      - sleep 300
+      - echo Destroying Deployment
+      - terraform destroy -auto-approve
  
 artifacts:
   files:
