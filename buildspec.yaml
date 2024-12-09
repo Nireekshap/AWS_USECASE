@@ -9,17 +9,23 @@ phases:
       - mv terraform /usr/local/bin/
   pre_build:
     commands:
-      - echo Logging in to AWS...
+      - echo Checking AWS login....
       - aws --version
       - aws sts get-caller-identity
   build:
     commands:
       - echo Initializing Terraform
       - terraform init
-      - echo Planning Terraform Deployment
+      - echo Planning Deployment
       - terraform plan -out=tfplan
-      - echo Applying Terraform Deployment
+      - echo Applying Deployment
       - terraform apply -auto-approve tfplan
+  post_build:
+    commands:
+      - echo Waiting for 5 minutes before destroying the deployment
+      - sleep 300
+      - echo Destroying Deployment
+      - terraform destroy -auto-approve
 artifacts:
   files:
     - '**/*'
