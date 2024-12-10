@@ -1,27 +1,31 @@
 version: 0.2
+ 
 phases:
   install:
-    runtime-versions:
-      python: 3.8  
     commands:
-      - curl -o terraform.zip https://releases.hashicorp.com/terraform/1.0.11/terraform_1.0.11_linux_amd64.zip
-      - unzip terraform.zip
+      - echo Installing Terraform
+      - curl -O https://releases.hashicorp.com/terraform/0.14.0/terraform_0.14.0_linux_amd64.zip
+      - unzip terraform_0.14.0_linux_amd64.zip
       - mv terraform /usr/local/bin/
   pre_build:
     commands:
-      - terraform init
-      - terraform plan
+      - echo Checking AWS login....
+      - aws --version
+      - aws sts get-caller-identity
   build:
     commands:
-      - terraform apply -auto-approve
+      - echo Initializing Terraform
+      - terraform init
+      - echo Planning Deployment
+      - terraform plan -out=tfplan
+      - echo Applying Deployment
+      - terraform apply -auto-approve tfplan
   post_build:
     commands:
       - echo Waiting for 5 minutes before destroying the deployment
       - sleep 300
       - echo Destroying Deployment
       - terraform destroy -auto-approve
- 
 artifacts:
   files:
     - '**/*'
-  discard-paths: yes
