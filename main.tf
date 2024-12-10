@@ -235,7 +235,7 @@ resource "aws_iam_role_policy_attachment" "s3_full_access" {
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "EC2S3IntsanceProfile"
+  name = "EC2S3IntsanceProfile1"
   role = aws_iam_role.ec2_role.name
 }
 
