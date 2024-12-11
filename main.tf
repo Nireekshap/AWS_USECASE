@@ -172,9 +172,6 @@ resource "aws_autoscaling_attachment" "alb_tg_attach" {
 # S3 bucket
 resource "aws_s3_bucket" "app_storage" {
   bucket = "application-storage-bucket1"
-  tags = {
-    Name = "app_storage"
-  }
 }
 
 resource "aws_s3_bucket_ownership_controls" "app_bucket_ownership_controls" {
@@ -187,6 +184,7 @@ resource "aws_s3_bucket_ownership_controls" "app_bucket_ownership_controls" {
 
 resource "aws_s3_bucket_acl" "app_storage_acl" {
   bucket = aws_s3_bucket.app_storage.id
+  depends_on = [ aws_s3_bucket_ownership_controls.app_bucket_ownership_controls ]
   acl    = "private"
 }
 
@@ -206,7 +204,6 @@ resource "aws_iam_role" "ec2_role" {
       {
         Action = "sts:AssumeRole"
         Effect = "Allow"
-        Sid    = ""
         Principal = {
           Service = "ec2.amazonaws.com"
         }
@@ -227,7 +224,7 @@ resource "aws_iam_policy" "policy" {
           "s3:*",
         ]
         Resource = [
-          "${aws_s3_bucket.app_storage.arn}",
+          aws_s3_bucket.app_storage.arn,
           "${aws_s3_bucket.app_storage.arn}/*"
         ]
       }
@@ -237,7 +234,7 @@ resource "aws_iam_policy" "policy" {
 
 resource "aws_iam_role_policy_attachment" "s3_full_access" {
   role       = aws_iam_role.ec2_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  policy_arn = aws_iam_policy.policy.arn
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
