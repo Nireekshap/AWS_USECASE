@@ -9,13 +9,10 @@ phases:
       - mv terraform /usr/local/bin/
   pre_build:
     commands:
-      - echo Checking AWS login....
-      - aws --version
-      - aws sts get-caller-identity
-  build:
-    commands:
       - echo Initializing Terraform
       - terraform init
+  build:
+    commands:
       - echo Planning Deployment
       - terraform plan -out=tfplan
       - echo Applying Deployment
