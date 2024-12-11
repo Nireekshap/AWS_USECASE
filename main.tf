@@ -163,6 +163,12 @@ resource "aws_lb_listener" "http_listener" {
   }
 }
 
+# ALB Target Group attachment
+resource "aws_autoscaling_attachment" "alb_tg_attach" {
+  autoscaling_group_name = aws_autoscaling_group.asg.id
+  lb_target_group_arn    = aws_lb_target_group.public_tg.arn
+}
+
 # S3 bucket
 resource "aws_s3_bucket" "app_storage" {
   bucket = "application-storage-bucket1"
@@ -235,7 +241,7 @@ resource "aws_iam_role_policy_attachment" "s3_full_access" {
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "EC2S3IntsanceProfile"
+  name = "EC2S3IntsanceProfile1"
   role = aws_iam_role.ec2_role.name
 }
 
