@@ -213,7 +213,7 @@ resource "aws_iam_role" "ec2_role" {
 }
 
 resource "aws_iam_policy" "policy" {
-  name        = "s3-policy"
+  name        = "s3-policy-1"
   description = "IAM policy granting full access to the S3 bucket."
   policy = jsonencode({
     Version = "2012-10-17"
