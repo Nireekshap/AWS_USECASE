@@ -139,7 +139,7 @@ resource "aws_lb" "public_lb" {
 
 resource "aws_lb" "private_nlb" {
   name            = "private-nlb"
-  internal        = true
+  internal        = false
   load_balancer_type = "network"
   subnets         = [aws_subnet.private_subnet.id]
 }
