@@ -16,8 +16,8 @@ variable "public_subnet_ranges" {
   default = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
-variable "private_subnet_ranges" {
-  default = ["10.0.3.0/24", "10.0.4.0/24"]
+variable "private_subnet_range" {
+  default = "10.0.3.0/24"
 }
 
 # Create VPC
@@ -35,11 +35,10 @@ resource "aws_subnet" "public_subnets" {
 }
 
 # Create private subnets
-resource "aws_subnet" "private_subnets" {
-  count             = length(var.az_list)
+resource "aws_subnet" "private_subnet" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_ranges[count.index]
-  availability_zone = var.az_list[count.index]
+  cidr_block        = var.private_subnet_range
+  availability_zone = var.az_list[0]
 }
 
 # Create Internet Gateway and route table for public subnets
@@ -119,14 +118,13 @@ resource "aws_autoscaling_group" "asg" {
     id      = aws_launch_template.as_conf.id
     version = "$Latest"
   }
-  target_group_arns = [aws_lb_target_group.public_tg.arn]
 }
 
 # EC2 instance in private subnet
 resource "aws_instance" "private_instance" {
   ami             = "ami-055e3d4f0bbeb5878"
   instance_type   = "t2.micro"
-  subnet_id       = aws_subnet.private_subnets[0].id
+  subnet_id       = aws_subnet.private_subnet.id
   security_groups = [aws_security_group.private_sg.id]
 }
 
@@ -139,11 +137,27 @@ resource "aws_lb" "public_lb" {
   subnets            = aws_subnet.public_subnets[*].id
 }
 
+resource "aws_lb" "private_nlb" {
+  name            = "private-nlb"
+  internal        = true
+  load_balancer_type = "network"
+  subnets         = [aws_subnet.private_subnet.id]
+}
+
 resource "aws_lb_target_group" "public_tg" {
   name     = "public-target-group"
   port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
+  target_type = "instance"
+}
+
+resource "aws_lb_target_group" "private_tg" {
+  name     = "private-target-group"
+  port     = 80
+  protocol = "TCP"
+  vpc_id   = aws_vpc.main.id
+  target_type = "instance"
 }
 
 resource "aws_lb_listener" "http_listener" {
@@ -154,6 +168,22 @@ resource "aws_lb_listener" "http_listener" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.public_tg.arn
   }
+}
+
+resource "aws_lb_listener" "tcp_listener" {
+  load_balancer_arn = aws_lb.private_nlb.arn
+  port              = 80
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.private_tg.arn
+  }
+}
+
+resource "aws_lb_target_group_attachment" "nlb_instance_attachment" {
+  target_group_arn = aws_lb_target_group.private_tg.arn
+  target_id        = aws_instance.private_instance.id
+  port             = 80
 }
 
 # ALB Target Group attachment
